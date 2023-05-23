@@ -21,7 +21,7 @@ export default function Students() {
   //     })
   // }, [])
 
-// dùng dể lấy param của url
+  // dùng dể lấy param của url
   const queryString: { page?: string } = useQueryString()
   const page = Number(queryString.page) || 1
 
@@ -41,7 +41,16 @@ export default function Students() {
 
   return (
     <div>
-      <h1 className='text-lg'>Students</h1>
+      <h1 className='text-center text-blue-500' style={{fontSize: "30px", fontWeight: "900"}}>LIST STUDENT</h1>
+      <div className='text-right'>
+        <Link
+          to='/students/add'
+          className='mr-2 mb-2 rounded-lg bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gradient-to-br focus:outline-none focus:ring-4 focus:ring-blue-300 '
+        >
+          + Add Student
+        </Link>
+      </div>
+
       {isLoading && (
         <div role='status' className='mt-6 animate-pulse'>
           <div className='mb-4 h-4  rounded bg-gray-200' />
@@ -85,10 +94,7 @@ export default function Students() {
               </thead>
               <tbody>
                 {data?.data.map((student) => (
-                  <tr
-                    key={student.id}
-                    className='border-b bg-white hover:bg-gray-50'
-                  >
+                  <tr key={student.id} className='border-b bg-white hover:bg-gray-50'>
                     <td className='py-4 px-6'>{student.id}</td>
                     <td className='py-4 px-6'>
                       <img src={student.avatar} alt={student.last_name} className='h-5 w-5' />
@@ -98,10 +104,7 @@ export default function Students() {
                     </th>
                     <td className='py-4 px-6'>{student.email}</td>
                     <td className='py-4 px-6 text-right'>
-                      <Link
-                        to='/students/1'
-                        className='mr-5 font-medium text-blue-600 hover:underline'
-                      >
+                      <Link to={`/students/1`} className='mr-5 font-medium text-blue-600 hover:underline'>
                         Edit
                       </Link>
                       <button className='font-medium text-red-600'>Delete</button>
