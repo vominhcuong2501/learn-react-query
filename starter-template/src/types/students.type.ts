@@ -9,4 +9,4 @@ export interface Student {
   btc_address: string
 }
 
-export type Students = Pick<Student, 'id' | 'email' | 'avatar' | 'last_name'>
+export type Students = Pick<Student, 'id' | 'email' | 'avatar' | 'last_name'>[]
