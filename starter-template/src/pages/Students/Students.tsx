@@ -1,47 +1,47 @@
-import { getStudents } from 'apis/students.api'
+import { deleteStudent, getStudents } from 'apis/students.api'
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryString } from 'utils/utils'
-import { useQuery } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import classNames from 'classnames'
+import { toast } from 'react-toastify'
 
 const LIMIT = 10
 
 export default function Students() {
-  // const [students, setStudents] = useState<StudentsType>([])
-  // const [isLoading, setIsLoading] = useState<boolean>(false)
-  // useEffect(() => {
-  //   setIsLoading(true)
-  //   getStudents(1, 10)
-  //     .then((res) => {
-  //       setStudents(res.data)
-  //     })
-  //     .finally(() => {
-  //       setIsLoading(false)
-  //     })
-  // }, [])
-
   // dùng dể lấy param của url
   const queryString: { page?: string } = useQueryString()
   const page = Number(queryString.page) || 1
 
   // dùng react query lấy dữ liệu
-  const { data, isLoading } = useQuery({
+  const studentQuery = useQuery({
     queryKey: ['students', page],
     queryFn: () => getStudents(page, LIMIT),
     // dùng dể cải thiện UX khi chuyển trang không hiển thị trạng thái loading
     keepPreviousData: true
   })
 
-  // lấy tổng số item từ api trả về
-  const totalStudentsCount = Number(data?.headers['x-total-count'] || 0)
+  // lấy tổng số student từ api trả về
+  const totalStudentsCount = Number(studentQuery.data?.headers['x-total-count'] || 0)
 
-  // làm tròn lên có số trang
+  // làm tròn lên có số trang dề chia pagination
   const totalPage = Math.ceil(totalStudentsCount / LIMIT)
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: (id: number | string) => deleteStudent(id),
+    onSuccess: (_) => {
+      toast.success(`Xóa thành công`)
+    }
+  })
+  const handleDelete = (id: number) => {
+    deleteStudentMutation.mutate(id)
+  }
 
   return (
     <div>
-      <h1 className='text-center text-blue-500' style={{fontSize: "30px", fontWeight: "900"}}>LIST STUDENT</h1>
+      <h1 className='text-center text-blue-500' style={{ fontSize: '30px', fontWeight: '900' }}>
+        LIST STUDENT
+      </h1>
       <div className='text-right'>
         <Link
           to='/students/add'
@@ -51,7 +51,7 @@ export default function Students() {
         </Link>
       </div>
 
-      {isLoading && (
+      {studentQuery.isLoading && (
         <div role='status' className='mt-6 animate-pulse'>
           <div className='mb-4 h-4  rounded bg-gray-200' />
           <div className='mb-2.5 h-10  rounded bg-gray-200' />
@@ -69,7 +69,7 @@ export default function Students() {
           <span className='sr-only'>Loading...</span>
         </div>
       )}
-      {!isLoading && (
+      {!studentQuery.isLoading && (
         <Fragment>
           <div className='relative mt-6 overflow-x-auto shadow-md sm:rounded-lg'>
             <table className='w-full text-left text-sm text-gray-500'>
@@ -93,7 +93,7 @@ export default function Students() {
                 </tr>
               </thead>
               <tbody>
-                {data?.data.map((student) => (
+                {studentQuery.data?.data.map((student) => (
                   <tr key={student.id} className='border-b bg-white hover:bg-gray-50'>
                     <td className='py-4 px-6'>{student.id}</td>
                     <td className='py-4 px-6'>
@@ -104,10 +104,12 @@ export default function Students() {
                     </th>
                     <td className='py-4 px-6'>{student.email}</td>
                     <td className='py-4 px-6 text-right'>
-                      <Link to={`/students/1`} className='mr-5 font-medium text-blue-600 hover:underline'>
+                      <Link to={`/students/${student.id}`} className='mr-5 font-medium text-blue-600 hover:underline'>
                         Edit
                       </Link>
-                      <button className='font-medium text-red-600'>Delete</button>
+                      <button className='font-medium text-red-600' onClick={() => handleDelete(student.id)}>
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

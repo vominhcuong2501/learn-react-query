@@ -1,12 +1,14 @@
-import { addStudent } from 'apis/students.api'
+import { addStudent, getStudent, updateStudent } from 'apis/students.api'
 import { useMemo, useState } from 'react'
-import { useMutation } from 'react-query'
+import { useMutation, useQuery } from 'react-query'
 import { useMatch } from 'react-router'
 import { Student } from 'types/students.type'
 import { isAxiosError } from 'utils/utils'
+import { useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 // chỉ dịnh những thuộc tính của FormStateType
-type FormStateType = Omit<Student, 'id'>
+type FormStateType = Omit<Student, 'id'> | Student
 
 // gán giá trị cho biến ban đầu
 const initialFormSTate: FormStateType = {
@@ -35,28 +37,76 @@ export default function AddStudent() {
   const [formState, setFormState] = useState<FormStateType>(initialFormSTate)
 
   // react query
-  const { mutate, error } = useMutation({
+  const addStudentMutation = useMutation({
     mutationFn: (body: FormStateType) => {
       return addStudent(body)
     }
   })
 
-  // dùng currying keyof là một từ khóa sử dụng để tạo ra một kiểu dữ liệu mới được gọi là "union of literal types" (liên kết của các kiểu chữ thể). Nó cho phép bạn truy xuất tập hợp các khóa (keys) của một kiểu dữ liệu và tạo ra một kiểu dữ liệu mới gồm các giá trị của các khóa đó.
-  const handleChange = (name: keyof FormStateType) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({ ...prev, [name]: event.target.value }))
-  }
+  // EDIT STUDENT
+  const { id } = useParams()
+  useQuery({
+    queryKey: ['student', id],
+    queryFn: () => getStudent(id as string),
+    enabled: id !== undefined,
+    onSuccess: (data) => {
+      setFormState(data.data)
+    }
+  })
+  const updateStudentMutation = useMutation({
+    mutationFn: (_) => updateStudent(id as string, formState as Student)
+  })
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    mutate(formState)
-  }
-
+  // truy xuất lỗi api trả về
   const errorForm: FormError = useMemo(() => {
+    const error = isAddMode ? addStudentMutation.error : updateStudentMutation.error
     if (isAxiosError<{ error: FormError }>(error) && error.response?.status === 422) {
       return error?.response?.data.error
     }
     return null
-  }, [error])
+  }, [addStudentMutation.error, isAddMode, updateStudentMutation.error])
+
+  // hàm keyof là một từ khóa sử dụng để tạo ra một kiểu dữ liệu mới được gọi là "union of literal types" (liên kết của các kiểu chữ thể). Nó cho phép bạn truy xuất tập hợp các khóa (keys) của một kiểu dữ liệu và tạo ra một kiểu dữ liệu mới gồm các giá trị của các khóa đó.
+  const handleChange = (name: keyof FormStateType) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({ ...prev, [name]: event.target.value }))
+    // khi api trả về dữ liệu thì mói reset
+    if (addStudentMutation.data || addStudentMutation.error) {
+      addStudentMutation.reset()
+    }
+  }
+  // cach 1
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    // nếu url students/add tồn tại thì sẽ thêm mới ngược lại là edit
+    if (isAddMode) {
+      addStudentMutation.mutate(formState, {
+        onSuccess: () => {
+          setFormState(initialFormSTate)
+          toast.success('Thêm thành công')
+        }
+      })
+    } else {
+      updateStudentMutation.mutate(undefined, {
+        onSuccess: (_) => {
+          toast.success('Update thành công')
+        }
+      })
+    }
+  }
+
+  // cách 2
+  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  //   event.preventDefault()
+  //   try {
+  //     const data = await mutateAsync(formState)
+  //     setFormState(initialFormSTate)
+  //     console.log(data)
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // }
+
+  // CHECK API TRẢ VỀ LỖI
 
   return (
     <div>
@@ -241,7 +291,7 @@ export default function AddStudent() {
           type='submit'
           className='w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 sm:w-auto'
         >
-          Submit
+          {isAddMode ? 'Add' : 'Update'}
         </button>
       </form>
     </div>
