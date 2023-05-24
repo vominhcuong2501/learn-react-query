@@ -1,17 +1,21 @@
-import { deleteStudent, getStudents } from 'apis/students.api'
+import { deleteStudent, getStudent, getStudents } from 'apis/students.api'
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryString } from 'utils/utils'
-import { useMutation, useQuery } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 import classNames from 'classnames'
 import { toast } from 'react-toastify'
 
+// đặt biến giới hạn của số student trong 1 page của pagination
 const LIMIT = 10
 
 export default function Students() {
   // dùng dể lấy param của url
   const queryString: { page?: string } = useQueryString()
   const page = Number(queryString.page) || 1
+
+  // tham chiếu đến queryClient ở file index.tsx
+  const queryClient = useQueryClient()
 
   // dùng react query lấy dữ liệu
   const studentQuery = useQuery({
@@ -21,20 +25,33 @@ export default function Students() {
     keepPreviousData: true
   })
 
-  // lấy tổng số student từ api trả về
+  // lấy tổng số student từ api trả về làm pagination
   const totalStudentsCount = Number(studentQuery.data?.headers['x-total-count'] || 0)
 
   // làm tròn lên có số trang dề chia pagination
   const totalPage = Math.ceil(totalStudentsCount / LIMIT)
 
+  // tiến hành xóa student theo id
   const deleteStudentMutation = useMutation({
     mutationFn: (id: number | string) => deleteStudent(id),
     onSuccess: (_) => {
       toast.success(`Xóa thành công`)
+      // cập nhật lại danh sách ngay trên giao diện bằng call api với key data mà mình muốn cập nhật là queryKey và   exact giúp ta lấy chính xác
+      queryClient.invalidateQueries({ queryKey: ['students', page], exact: true })
     }
   })
   const handleDelete = (id: number) => {
     deleteStudentMutation.mutate(id)
+  }
+
+  // kho hover từng dòng sẽ fetch api cua data dòng đó
+  const handleRefetchStudent = (id: number) => {
+    // id ở đây là number do data student.id phía code là number
+    queryClient.prefetchQuery(['student', String(id)], {
+      // do id ở trên là number nên phải ép kiểu về string cho giống queryKey
+      queryFn: () => getStudent(id),
+      staleTime: 1000 * 10
+    })
   }
 
   return (
@@ -94,7 +111,11 @@ export default function Students() {
               </thead>
               <tbody>
                 {studentQuery.data?.data.map((student) => (
-                  <tr key={student.id} className='border-b bg-white hover:bg-gray-50'>
+                  <tr
+                    key={student.id}
+                    className='border-b bg-white hover:bg-gray-50'
+                    onMouseEnter={() => handleRefetchStudent(student.id)}
+                  >
                     <td className='py-4 px-6'>{student.id}</td>
                     <td className='py-4 px-6'>
                       <img src={student.avatar} alt={student.last_name} className='h-5 w-5' />

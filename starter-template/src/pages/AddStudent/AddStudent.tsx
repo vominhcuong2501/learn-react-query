@@ -1,6 +1,6 @@
 import { addStudent, getStudent, updateStudent } from 'apis/students.api'
-import { useMemo, useState } from 'react'
-import { useMutation, useQuery } from 'react-query'
+import { useMemo, useState, useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 import { useMatch } from 'react-router'
 import { Student } from 'types/students.type'
 import { isAxiosError } from 'utils/utils'
@@ -36,6 +36,16 @@ export default function AddStudent() {
 
   const [formState, setFormState] = useState<FormStateType>(initialFormSTate)
 
+  // tham chiếu đến queryClient ở file App.tsx
+  const queryClient = useQueryClient()
+
+  // set dữ liệu của gender cho giống api trả về
+  const gender = {
+    male: 'Male',
+    female: 'Female',
+    other: 'Other'
+  }
+
   // react query
   const addStudentMutation = useMutation({
     mutationFn: (body: FormStateType) => {
@@ -45,16 +55,26 @@ export default function AddStudent() {
 
   // EDIT STUDENT
   const { id } = useParams()
-  useQuery({
+  // khi dùng staleTime thì trong khoảng thời gian dó sẽ không fetch lại api nên dùng useEffect  
+  const studentQuery = useQuery({
     queryKey: ['student', id],
     queryFn: () => getStudent(id as string),
     enabled: id !== undefined,
-    onSuccess: (data) => {
-      setFormState(data.data)
-    }
+    staleTime: 1000 * 10
   })
+
+  useEffect(() => {
+    if (studentQuery.data) {
+      setFormState(studentQuery.data.data)
+    }
+  }, [studentQuery.data])
+
   const updateStudentMutation = useMutation({
-    mutationFn: (_) => updateStudent(id as string, formState as Student)
+    mutationFn: (_) => updateStudent(id as string, formState as Student),
+    // cập nhật lại danh sách ngay trên giao diện, lấy tham số là queryKey và data
+    onSuccess: (data) => {
+      queryClient.setQueryData(['student', id], data)
+    }
   })
 
   // truy xuất lỗi api trả về
@@ -74,7 +94,8 @@ export default function AddStudent() {
       addStudentMutation.reset()
     }
   }
-  // cach 1
+
+  // thực hiện nhấn btn submit
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     // nếu url students/add tồn tại thì sẽ thêm mới ngược lại là edit
@@ -93,20 +114,6 @@ export default function AddStudent() {
       })
     }
   }
-
-  // cách 2
-  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault()
-  //   try {
-  //     const data = await mutateAsync(formState)
-  //     setFormState(initialFormSTate)
-  //     console.log(data)
-  //   } catch (error) {
-  //     console.log(error)
-  //   }
-  // }
-
-  // CHECK API TRẢ VỀ LỖI
 
   return (
     <div>
@@ -146,8 +153,8 @@ export default function AddStudent() {
                   id='gender-1'
                   type='radio'
                   name='gender'
-                  value='male'
-                  checked={formState.gender === 'male'}
+                  value={gender.male}
+                  checked={formState.gender === gender.male}
                   onChange={handleChange('gender')}
                   className='h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 '
                 />
@@ -160,8 +167,8 @@ export default function AddStudent() {
                   id='gender-2'
                   type='radio'
                   name='gender'
-                  value='female'
-                  checked={formState.gender === 'female'}
+                  value={gender.female}
+                  checked={formState.gender === gender.female}
                   onChange={handleChange('gender')}
                   className='h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                 />
@@ -174,8 +181,8 @@ export default function AddStudent() {
                   id='gender-3'
                   type='radio'
                   name='gender'
-                  value='other'
-                  checked={formState.gender === 'other'}
+                  value={gender.other}
+                  checked={formState.gender === gender.other}
                   onChange={handleChange('gender')}
                   className='h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                 />
