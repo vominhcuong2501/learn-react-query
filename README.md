@@ -37,7 +37,7 @@ React Query có cơ chế caching hơi khác một chút so với RTK Query, nê
 - `inactive`: là khi data đó không còn component nào subcribe cả
 
 ```tsx
-const result = useQuery({ queryKey: ['todos'], queryFn: fetchTodoList })
+const result = useQuery({ queryKey: ["todos"], queryFn: fetchTodoList });
 ```
 
 `result` là một object chứa một vài state rất quan trọng: `status`, `fetchStatus`,...
@@ -88,13 +88,13 @@ Giả sử chúng ta dùng `cacheTime` mặc định là **5 phút** và `staleT
 
 ```jsx
 function A() {
-  const result = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  const result = useQuery({ queryKey: ["todos"], queryFn: fetchTodos });
 }
 function B() {
-  const result = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  const result = useQuery({ queryKey: ["todos"], queryFn: fetchTodos });
 }
 function C() {
-  const result = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  const result = useQuery({ queryKey: ["todos"], queryFn: fetchTodos });
 }
 ```
 
@@ -112,3 +112,34 @@ function C() {
 - Trước khi `cacheTime` hết thì ông `C` comopnent được mount. cache data `['todos']` được trả về ngay lập tức cho `C` và `fetchTodos` sẽ chạy ngầm. Khi nó hoàn thành thì sẽ cập nhật lại cache với data mới.
 - Cuối cùng thì `C` unmount
 - Không còn ai subcribe đến cache data `['todos']` trong 5 phút tiếp theo nữa và cache data `['todos']` bị xóa hoàn toàn
+
+# useQuery:
+
+Hook này được sử dụng để thực hiện các truy vấn (queries) dữ liệu từ một nguồn dữ liệu, chẳng hạn như một API. Nó giúp bạn thực hiện truy vấn dữ liệu và quản lý trạng thái dữ liệu như loading, error và data. Bạn có thể sử dụng useQuery để lấy dữ liệu từ một nguồn dữ liệu, ví dụ như lấy danh sách các người dùng từ một API
+
+# useMutation:
+
+Hook này được sử dụng để thực hiện các mutation (thay đổi dữ liệu) như tạo, cập nhật hoặc xóa dữ liệu từ một nguồn dữ liệu. Nó giúp bạn thực hiện các thay đổi dữ liệu và quản lý trạng thái của quá trình thay đổi đó, chẳng hạn như loading, error và data kết quả. Ví dụ, bạn có thể sử dụng useMutation để tạo một người dùng mới
+
+# Có một số khác biệt quan trọng giữa useQuery và useMutation trong thư viện React Query:
+
+# Mục đích sử dụng:
+
+useQuery: Được sử dụng để thực hiện các truy vấn (queries) để lấy dữ liệu từ một nguồn dữ liệu như một API.
+useMutation: Được sử dụng để thực hiện các mutation (thay đổi dữ liệu) như tạo mới, cập nhật hoặc xóa dữ liệu từ một nguồn dữ liệu.
+
+# Trạng thái quản lý:
+
+useQuery: Quản lý trạng thái dữ liệu như loading, error và data. Cung cấp các thuộc tính như isLoading, isError và data để xử lý dữ liệu trả về từ truy vấn.
+useMutation: Quản lý trạng thái của quá trình thay đổi dữ liệu như loading, error và data kết quả. Cung cấp các thuộc tính như isLoading, isError, data và mutate để xử lý quá trình thay đổi dữ liệu.
+
+# Hành động thực hiện:
+
+useQuery: Thực hiện truy vấn dữ liệu từ một nguồn dữ liệu bằng cách gọi một hàm hoặc API.
+useMutation: Thực hiện thay đổi dữ liệu bằng cách gọi một hàm hoặc API để thực hiện các hành động như tạo mới, cập nhật hoặc xóa dữ liệu.
+
+# Cách sử dụng:
+
+useQuery: Thường được sử dụng để hiển thị dữ liệu trong component React, ví dụ như hiển thị danh sách người dùng từ một API.
+useMutation: Thường được sử dụng trong các form hoặc các tác động người dùng để thay đổi dữ liệu, ví dụ như tạo mới một người dùng.
+=> Tuy nhiên, cả useQuery và useMutation đều sử dụng React Query để quản lý và cung cấp các tính năng liên quan đến caching, tự động làm mới dữ liệu và xử lý lỗi. Cả hai hook đều giúp bạn tương tác với dữ liệu một cách dễ dàng và hiệu quả trong ứng dụng React của bạn.
