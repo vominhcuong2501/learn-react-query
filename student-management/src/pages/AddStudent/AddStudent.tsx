@@ -7,7 +7,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { isAxiosError } from 'utils/utils'
 import { toast } from 'react-toastify'
 
+// dùng omit để loại trừ biến id ra khỏi học sinh
 type FormStateType = Omit<Student, 'id'> | Student
+
+// đặt biến mẫu
 const initialFormState: FormStateType = {
   avatar: '',
   email: '',
@@ -29,12 +32,22 @@ const gender = {
   female: 'Female',
   other: 'Other'
 }
+
 export default function AddStudent() {
   const [formState, setFormState] = useState<FormStateType>(initialFormState)
+
+  // kiểm tra đường dẫn thêm học sinh
   const addMatch = useMatch('/students/add')
+
+  // nếu đúng thêm học sinh trả về true
   const isAddMode = Boolean(addMatch)
+
+  // lấy id của học sinh
   const { id } = useParams()
+
   const queryClient = useQueryClient()
+
+  // call api them học sinh
   const addStudentMutation = useMutation({
     mutationFn: (body: FormStateType) => {
       return addStudent(body)
@@ -42,25 +55,37 @@ export default function AddStudent() {
   })
 
   const studentQuery = useQuery({
+    // key và id
     queryKey: ['student', id],
+
+    // call api lấy thông tin học sinh
     queryFn: () => getStudent(id as string),
+
     enabled: id !== undefined,
+
+    // set thời gian để kiểm tra dữ liệu đã cũ chưa, nếu quá thời gian thì sẽ fetch lại data
     staleTime: 1000 * 10
   })
 
+  // khi có thông tin học sinh sẽ gán vào form
   useEffect(() => {
     if (studentQuery.data) {
       setFormState(studentQuery.data.data)
     }
   }, [studentQuery.data])
 
+  // update thông tin học sinh
   const updateStudentMutation = useMutation({
+    // call api update thông tin
     mutationFn: (_) => updateStudent(id as string, formState as Student),
+
+    // cập nhật dữ liệu trên tool khi ta edit
     onSuccess: (data) => {
       queryClient.setQueryData(['student', id], data)
     }
   })
 
+  // validate form
   const errorForm: FormError = useMemo(() => {
     const error = isAddMode ? addStudentMutation.error : updateStudentMutation.error
     if (isAxiosError<{ error: FormError }>(error) && error.response?.status === 422) {

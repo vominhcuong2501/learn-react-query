@@ -21,8 +21,12 @@ export default function Students() {
   //       setIsLoading(false)
   //     })
   // }, [])
+
   const queryClient = useQueryClient()
+
+  // hook lấy pathname
   const queryString: { page?: string } = useQueryString()
+
   const page = Number(queryString.page) || 1
 
   const studentsQuery = useQuery({
@@ -39,20 +43,29 @@ export default function Students() {
   })
 
   const deleteStudentMutation = useMutation({
+    // call api xóa học sinh
     mutationFn: (id: number | string) => deleteStudent(id),
+
     onSuccess: (_, id) => {
       toast.success(`Xóa thành công student với id là ${id}`)
+
+      // khi thành công sẽ call lại api với key tương ứng để cập nhât data
       queryClient.invalidateQueries({ queryKey: ['students', page], exact: true })
     }
   })
 
+  // đếm tổng sô học sinh
   const totalStudentsCount = Number(studentsQuery.data?.headers['x-total-count'] || 0)
+
+  // tính tổng số trang
   const totalPage = Math.ceil(totalStudentsCount / LIMIT)
 
+  // gọi hàm xóa học sinh
   const handleDelete = (id: number) => {
     deleteStudentMutation.mutate(id)
   }
 
+  // dùng đê call api lấy thông tin học sinh mỗi khi rê chuột vào
   const handlePrefetchStudent = (id: number) => {
     // queryClient.prefetchQuery(['student', String(id)], {
     //   queryFn: () => getStudent(id),
